@@ -106,7 +106,13 @@ module.exports = __webpack_require__(1).default;
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+// ESM COMPAT FLAG
 __webpack_require__.r(__webpack_exports__);
+
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, "default", function() { return /* binding */ watermark; });
+
+// NAMESPACE OBJECT: ./lib/style/image/index.js
 var style_image_namespaceObject = {};
 __webpack_require__.r(style_image_namespaceObject);
 __webpack_require__.d(style_image_namespaceObject, "atPos", function() { return atPos; });
@@ -115,6 +121,8 @@ __webpack_require__.d(style_image_namespaceObject, "upperRight", function() { re
 __webpack_require__.d(style_image_namespaceObject, "lowerLeft", function() { return lowerLeft; });
 __webpack_require__.d(style_image_namespaceObject, "upperLeft", function() { return upperLeft; });
 __webpack_require__.d(style_image_namespaceObject, "center", function() { return center; });
+
+// NAMESPACE OBJECT: ./lib/style/text/index.js
 var text_namespaceObject = {};
 __webpack_require__.r(text_namespaceObject);
 __webpack_require__.d(text_namespaceObject, "atPos", function() { return text_atPos; });
@@ -154,7 +162,7 @@ function identity(x) {
   return x;
 }
 // CONCATENATED MODULE: ./lib/image/index.js
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 
 /**
@@ -188,10 +196,6 @@ function getLoader(resource) {
     return loadUrl;
   }
 
-  if (resource instanceof Image) {
-    return identity;
-  }
-
   return loadFile;
 }
 /**
@@ -203,17 +207,18 @@ function getLoader(resource) {
  * @return {Promise}
  */
 
-function image_load(resources, init) {
+function image_load(resources, init, pool) {
   var promises = [];
+  return pool.pop().then(function (canvas) {
+    for (var i = 0; i < resources.length; i++) {
+      var resource = resources[i];
+      var loader = getLoader(resource);
+      var promise = loader(resource, init, canvas);
+      promises.push(promise);
+    }
 
-  for (var i = 0; i < resources.length; i++) {
-    var resource = resources[i];
-    var loader = getLoader(resource);
-    var promise = loader(resource, init);
-    promises.push(promise);
-  }
-
-  return Promise.all(promises);
+    return Promise.all(promises);
+  });
 }
 /**
  * Load an image by its url
@@ -223,8 +228,8 @@ function image_load(resources, init) {
  * @return {Promise}
  */
 
-function loadUrl(url, init) {
-  var img = new Image();
+function loadUrl(url, init, canvas) {
+  var img = canvas.createImage();
   typeof init === 'function' && init(img);
   return new Promise(function (resolve) {
     img.onload = function () {
@@ -242,10 +247,10 @@ function loadUrl(url, init) {
  * @return {Promise}
  */
 
-function loadFile(file) {
+function loadFile(file, canvas) {
   var reader = new FileReader();
   return new Promise(function (resolve) {
-    var img = new Image();
+    var img = canvas.createImage();
 
     reader.onloadend = function () {
       return setAndResolve(img, reader.result, resolve);
@@ -262,8 +267,8 @@ function loadFile(file) {
  * @return {Image}
  */
 
-function createImage(url, onload) {
-  var img = new Image();
+function createImage(url, onload, canvas) {
+  var img = canvas.createImage();
 
   if (typeof onload === 'function') {
     img.onload = onload;
@@ -291,13 +296,12 @@ function drawImage(img, canvas) {
  * Convert an Image object to a canvas
  *
  * @param {Image} img
- * @param {CanvasPool} pool
+ * @param {HTMLCanvasElement} canvas
  * @return {HTMLCanvasElement}
  */
 
 
-function imageToCanvas(img, pool) {
-  var canvas = pool.pop();
+function imageToCanvas(img, canvas) {
   return drawImage(img, canvas);
 }
 /**
@@ -305,13 +309,13 @@ function imageToCanvas(img, pool) {
  * to canvas elements
  *
  * @param {Array} images
- * @param {CanvasPool} pool
+ * @param {HTMLCanvasElement} canvas
  * @return {HTMLCanvasElement[]}
  */
 
-function mapToCanvas(images, pool) {
+function mapToCanvas(images, canvas) {
   return images.map(function (img) {
-    return imageToCanvas(img, pool);
+    return imageToCanvas(img, canvas);
   });
 }
 // CONCATENATED MODULE: ./lib/canvas/index.js
@@ -677,10 +681,19 @@ function CanvasPool() {
      */
     pop: function pop() {
       if (this.length === 0) {
-        canvases.push(document.createElement('canvas'));
+        return new Promise(function (resolve) {
+          wx.createSelectorQuery().select('#' + 'watermark').fields({
+            node: true,
+            size: true
+          }).exec(function (res) {
+            canvas = res[0].node;
+            canvases.push(canvas);
+            resolve(canvas);
+          });
+        });
       }
 
-      return canvases.pop();
+      return Promise.resolve(canvases.pop());
     },
 
     /**
@@ -725,7 +738,6 @@ function CanvasPool() {
 var shared = CanvasPool();
 /* harmony default export */ var canvas_pool = (shared);
 // CONCATENATED MODULE: ./lib/index.js
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return watermark; });
 
 
 
@@ -795,7 +807,7 @@ function watermark(resources) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   var promise = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
   var opts = mergeOptions(options);
-  promise || (promise = image_load(resources, opts.init));
+  promise || (promise = image_load(resources, opts.init, canvas_pool));
   return {
     /**
      * Convert the watermarked image into a dataUrl. The draw
@@ -827,7 +839,7 @@ function watermark(resources) {
      */
     load: function load(resources, init) {
       var promise = this.then(function (resource) {
-        return image_load([resource].concat(resources), init);
+        return image_load([resource].concat(resources), init, canvas_pool);
       });
       return watermark(resources, opts, promise);
     },
@@ -840,7 +852,7 @@ function watermark(resources) {
      */
     render: function render() {
       var promise = this.then(function (resource) {
-        return image_load([resource]);
+        return image_load([resource], null, canvas_pool);
       });
       return watermark(resources, opts, promise);
     },
