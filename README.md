@@ -7,19 +7,6 @@ to current browsers via [Babel](https://babeljs.io/). Supports urls, file inputs
 For anyone that is interested: I ported this to a ClojureScript library called
 [Dandy Roll](https://github.com/brianium/dandy-roll).
 
-## Tested Browsers
-
-Any browser supporting [File](https://developer.mozilla.org/en-US/docs/Web/API/File#Browser_compatibility) and [FileReader](https://developer.mozilla.org/en-US/docs/Web/API/FileReader#Browser_compatibility) should work. The following browsers have been
-tested and work:
-
-* IE10 (Windows 7)
-* Chrome 42 (OS X 10.10.3)
-* Firefox 38 (OS X 10.10.3)
-* Safari 8.0.6 (OS X 10.10.3)
-* Opera 29.0 (OS X 10.10.3)
-
-Please feel free to update this list or submit a fix for a particular browser via a pull request.
-
 ## Installing
 
 watermark.js is available via npm and bower:
