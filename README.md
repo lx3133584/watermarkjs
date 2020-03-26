@@ -23,14 +23,14 @@ $ bower install watermarkjs
 
 ```js
 // watermark by local path
-watermark(['img/photo.jpg', 'img/logo.png'])
-  .image(watermark.image.lowerRight(0.5))
+watermark('img/photo.jpg')
+  .image(watermark.image.lowerRight('http://host.com/logo.png', 0.5))
   .then(img => document.getElementById('container').appendChild(img));
 
 // load a url and file object
 const upload = document.querySelector('input[type=file]').files[0];
-watermark([upload, 'img/logo.png'])
-  .image(watermark.image.lowerLeft(0.5))
+watermark(upload)
+  .image(watermark.image.lowerLeft('http://host.com/logo.png', 0.5))
   .then(img => document.getElementById('container').appendChild(img));
 
 // watermark from remote source
@@ -39,8 +39,8 @@ const options = {
     img.crossOrigin = 'anonymous'
   }
 };
-watermark(['http://host.com/photo.jpg', 'http://host.com/logo.png'], options)
-  .image(watermark.image.lowerRight(0.5))
+watermark('http://host.com/photo.jpg', options)
+  .image(watermark.image.lowerRight('http://host.com/logo.png', 0.5))
   .then(img => document.getElementById('container').appendChild(img));
 ```
 

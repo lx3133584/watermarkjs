@@ -132,6 +132,203 @@ __webpack_require__.d(text_namespaceObject, "upperRight", function() { return te
 __webpack_require__.d(text_namespaceObject, "upperLeft", function() { return text_upperLeft; });
 __webpack_require__.d(text_namespaceObject, "center", function() { return text_center; });
 
+// CONCATENATED MODULE: ./lib/image/index.js
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+/**
+ * Used for loading image resources asynchronously and maintaining
+ * the supplied order of arguments
+ *
+ * @param {String} resource - a url, File objects, or Image objects
+ * @param {Function} init - called at the beginning of resource initialization
+ * @return {Promise}
+ */
+function load(resource, init, canvas) {
+  var promise = loadUrl(resource, init, canvas);
+  return promise;
+}
+/**
+ * Load an image by its url
+ *
+ * @param {String} url
+ * @param {Function} init - an optional image initializer
+ * @return {Promise}
+ */
+
+function loadUrl(url, init, canvas) {
+  return createImage(url, init).then(function (res) {
+    console.log(canvas, canvas._canvasRef);
+    canvas._canvasRef.style.width = res.width + 'px';
+    canvas._canvasRef.style.height = res.height + 'px';
+    canvas._canvasRef.width = res.width;
+    canvas._canvasRef.height = res.height;
+    return res.path;
+  });
+}
+/**
+ * Create a new image, optionally configuring it's onload behavior
+ *
+ * @param {String} url
+ * @param {Function} onload
+ * @return {Promise<img>}
+ */
+
+function createImage(url, onload) {
+  return new Promise(function (resolve, reject) {
+    wx.getImageInfo({
+      src: url,
+      success: function success(res) {
+        var result = _objectSpread({}, res, {
+          path: url
+        });
+
+        if (typeof onload === 'function') {
+          onload(result);
+        }
+
+        resolve(result);
+      },
+      fail: reject
+    });
+  });
+}
+/**
+ * Draw an image to a canvas element
+ *
+ * @param {Image} img
+ * @param {HTMLCanvasElement} canvas
+ * @return {Promise}
+ */
+
+function drawImage(path, canvas) {
+  var ctx = canvas.getContext('2d');
+  var img = canvas.createImage();
+  img.src = path;
+  return new Promise(function (resolve, reject) {
+    img.onload = function () {
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas);
+    };
+
+    img.onerror = reject;
+  });
+}
+// CONCATENATED MODULE: ./lib/canvas/index.js
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function canvas_defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var Canvas = /*#__PURE__*/function () {
+  function Canvas() {
+    _classCallCheck(this, Canvas);
+
+    canvas_defineProperty(this, "canvas", null);
+  }
+
+  _createClass(Canvas, [{
+    key: "init",
+
+    /**
+      * Get a canvas
+      *
+      * @param {String} id Canvas id
+      * @return {Promise<HTMLCanvasElement>}
+      */
+    value: function init(id) {
+      var _this = this;
+
+      return new Promise(function (resolve, reject) {
+        var query = wx.createSelectorQuery();
+        query.select('#' + id).fields({
+          node: true,
+          size: true
+        }).exec(function (res) {
+          var canvas = res[0].node;
+          console.log(111111, id, canvas._canvasId, res);
+
+          if (canvas) {
+            _this.canvas = canvas;
+
+            _this.release(canvas);
+
+            resolve(canvas);
+          } else {
+            reject('can not find canvas');
+          }
+        });
+      });
+    }
+    /**
+      * Get a canvas
+      *
+      * @return {HTMLCanvasElement}
+      */
+
+  }, {
+    key: "get",
+    value: function get() {
+      return this.canvas;
+    }
+    /**
+     * Get the data url of a canvas
+     *
+     * @param {HTMLCanvasElement}
+     * @param {Paramters} Specifications according to HTMLCanvasElement.toDataURL() Documentation
+     * @return {Promise<String>}
+     */
+
+  }, {
+    key: "dataUrl",
+    value: function dataUrl(canvas, _ref) {
+      var type = _ref.type,
+          quality = _ref.quality,
+          id = _ref.id;
+      return new Promise(function (resolve, reject) {
+        wx.canvasToTempFilePath({
+          fileType: type,
+          quality: quality,
+          x: 0,
+          y: 0,
+          width: canvas.width,
+          height: canvas.height,
+          destWidth: canvas.width,
+          destHeight: canvas.height,
+          canvasId: canvas._canvasId,
+          success: function success(res) {
+            console.log(111, res);
+            resolve(res.tempFilePath);
+          },
+          fail: reject
+        });
+      });
+    }
+    /**
+     * Return a canvas to the pool. This function will clear the canvas for reuse
+     *
+     * @param {HTMLCanvasElement} canvas
+     * @return {String}
+     */
+
+  }, {
+    key: "release",
+    value: function release(canvas) {
+      var context = canvas.getContext('2d');
+      context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }]);
+
+  return Canvas;
+}();
+
+
 // CONCATENATED MODULE: ./lib/functions/index.js
 /**
  * Return a function that executes a sequence of functions from left to right,
@@ -161,181 +358,9 @@ function sequence() {
 function identity(x) {
   return x;
 }
-// CONCATENATED MODULE: ./lib/image/index.js
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-
-/**
- * Set the src of an image object and call the resolve function
- * once it has loaded
- *
- * @param {Image} img
- * @param {String} src
- * @param {Function} resolve
- */
-
-function setAndResolve(img, src, resolve) {
-  img.onload = function () {
-    return resolve(img);
-  };
-
-  img.src = src;
-}
-/**
- * Given a resource, return an appropriate loading function for it's type
- *
- * @param {String|File|Image} resource
- * @return {Function}
- */
-
-
-function getLoader(resource) {
-  var type = _typeof(resource);
-
-  if (type === 'string') {
-    return loadUrl;
-  }
-
-  return loadFile;
-}
-/**
- * Used for loading image resources asynchronously and maintaining
- * the supplied order of arguments
- *
- * @param {Array} resources - a mixed array of urls, File objects, or Image objects
- * @param {Function} init - called at the beginning of resource initialization
- * @return {Promise}
- */
-
-function image_load(resources, init, pool) {
-  var promises = [];
-  return pool.pop().then(function (canvas) {
-    for (var i = 0; i < resources.length; i++) {
-      var resource = resources[i];
-      var loader = getLoader(resource);
-      var promise = loader(resource, init, canvas);
-      promises.push(promise);
-    }
-
-    return Promise.all(promises);
-  });
-}
-/**
- * Load an image by its url
- *
- * @param {String} url
- * @param {Function} init - an optional image initializer
- * @return {Promise}
- */
-
-function loadUrl(url, init, canvas) {
-  var img = canvas.createImage();
-  typeof init === 'function' && init(img);
-  return new Promise(function (resolve) {
-    img.onload = function () {
-      return resolve(img);
-    };
-
-    img.src = url;
-  });
-}
-/**
- * Return a collection of images from an
- * array of File objects
- *
- * @param {File} file
- * @return {Promise}
- */
-
-function loadFile(file, canvas) {
-  var reader = new FileReader();
-  return new Promise(function (resolve) {
-    var img = canvas.createImage();
-
-    reader.onloadend = function () {
-      return setAndResolve(img, reader.result, resolve);
-    };
-
-    reader.readAsDataURL(file);
-  });
-}
-/**
- * Create a new image, optionally configuring it's onload behavior
- *
- * @param {String} url
- * @param {Function} onload
- * @return {Image}
- */
-
-function createImage(url, onload, canvas) {
-  var img = canvas.createImage();
-
-  if (typeof onload === 'function') {
-    img.onload = onload;
-  }
-
-  img.src = url;
-  return img;
-}
-/**
- * Draw an image to a canvas element
- *
- * @param {Image} img
- * @param {HTMLCanvasElement} canvas
- * @return {HTMLCanvasElement}
- */
-
-function drawImage(img, canvas) {
-  var ctx = canvas.getContext('2d');
-  canvas.width = img.width;
-  canvas.height = img.height;
-  ctx.drawImage(img, 0, 0);
-  return canvas;
-}
-/**
- * Convert an Image object to a canvas
- *
- * @param {Image} img
- * @param {HTMLCanvasElement} canvas
- * @return {HTMLCanvasElement}
- */
-
-
-function imageToCanvas(img, canvas) {
-  return drawImage(img, canvas);
-}
-/**
- * Convert an array of image objects
- * to canvas elements
- *
- * @param {Array} images
- * @param {HTMLCanvasElement} canvas
- * @return {HTMLCanvasElement[]}
- */
-
-function mapToCanvas(images, canvas) {
-  return images.map(function (img) {
-    return imageToCanvas(img, canvas);
-  });
-}
-// CONCATENATED MODULE: ./lib/canvas/index.js
-/**
- * Get the data url of a canvas
- *
- * @param {HTMLCanvasElement}
- * @param {Paramters} Specifications according to HTMLCanvasElement.toDataURL() Documentation
- * @return {String}
- */
-function canvas_dataUrl(canvas) {
-  var parameters = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {
-    type: 'image/png',
-    encoderOptions: 0.92
-  };
-  return canvas.toDataURL(parameters.type, parameters.encoderOptions);
-}
 // CONCATENATED MODULE: ./lib/blob/index.js
 
-var url = /^data:([^;]+);base64,(.*)$/;
+var blob_url = /^data:([^;]+);base64,(.*)$/;
 /**
  * Split a data url into a content type and raw data
  *
@@ -344,7 +369,7 @@ var url = /^data:([^;]+);base64,(.*)$/;
  */
 
 function split(dataUrl) {
-  return url.exec(dataUrl).slice(1);
+  return blob_url.exec(dataUrl).slice(1);
 }
 /**
  * Decode a base64 string
@@ -398,12 +423,10 @@ var blob_blob = sequence(split, function (parts) {
  */
 function atPos(xFn, yFn, alpha) {
   alpha || (alpha = 1.0);
-  return function (target, watermark) {
+  return function (target, img) {
     var context = target.getContext('2d');
-    context.save();
     context.globalAlpha = alpha;
-    context.drawImage(watermark, xFn(target, watermark), yFn(target, watermark));
-    context.restore();
+    context.drawImage(img.path, xFn(target, img), yFn(target, img));
     return target;
   };
 }
@@ -498,13 +521,11 @@ function text_atPos(xFn, yFn, text, font, fillStyle, alpha) {
   alpha || (alpha = 1.0);
   return function (target) {
     var context = target.getContext('2d');
-    context.save();
     context.globalAlpha = alpha;
     context.fillStyle = fillStyle;
     context.font = font;
     var metrics = context.measureText(text);
     context.fillText(text, xFn(target, metrics, context), yFn(target, metrics, context));
-    context.restore();
     return target;
   };
 }
@@ -603,28 +624,19 @@ function text_center(text, font, fillStyle, alpha, y) {
 // CONCATENATED MODULE: ./lib/style/index.js
 
 
-/**
- * @typedef {Object} DrawResult
- * @property {HTMLCanvasElement} canvas - the end result of a draw
- * @property {HTMLCanvasElement[]} sources - the sources used in the draw
- */
-
 var style_image = style_image_namespaceObject;
 var style_text = text_namespaceObject;
 /**
  * Create a DrawResult by apply a list of canvas elements to a draw function
  *
  * @param {Function} draw - the draw function used to create a DrawResult
- * @param {HTMLCanvasElement} sources - the canvases used by the draw function
- * @return {DrawResult}
+ * @param {HTMLCanvasElement} canvas - the canvases used by the draw function
+ * @return {HTMLCanvasElement}
  */
 
-function style_result(draw, sources) {
-  var canvas = draw.apply(null, sources);
-  return {
-    canvas: canvas,
-    sources: sources
-  };
+function result(draw, canvas) {
+  draw.apply(null, [canvas]);
+  return canvas;
 }
 // CONCATENATED MODULE: ./lib/object/index.js
 /**
@@ -651,94 +663,7 @@ function extend(first, second) {
 function clone(obj) {
   return extend({}, obj);
 }
-// CONCATENATED MODULE: ./lib/canvas/pool.js
-/**
- * An immutable canvas pool allowing more efficient use of canvas resources
- *
- * @typedef {Object} CanvasPool
- * @property {Function} pop - return a promise that will evaluate to a canvas
- * @property {Number} length - the number of available canvas elements
- * @property {HTMLCanvasElement[]} elements - the canvas elements used by the pool
- * @property {Function} clear - empty the pool of canvas elements
- * @property {Function} release - free a pool up for release and return the data url
- */
-
-/**
- * Create a CanvasPool with the given size
- *
- * @param {Number} size
- * @param {HTMLCanvasElement[]} elements
- * @param {EventEmitter} eventEmitter
- * @return {CanvasPool}
- */
-function CanvasPool() {
-  var canvases = [];
-  return {
-    /**
-     * Get the next available canvas from the pool
-     *
-     * @return {HTMLCanvasElement}
-     */
-    pop: function pop() {
-      if (this.length === 0) {
-        return new Promise(function (resolve) {
-          wx.createSelectorQuery().select('#' + 'watermark').fields({
-            node: true,
-            size: true
-          }).exec(function (res) {
-            canvas = res[0].node;
-            canvases.push(canvas);
-            resolve(canvas);
-          });
-        });
-      }
-
-      return Promise.resolve(canvases.pop());
-    },
-
-    /**
-     * Return the number of available canvas elements in the pool
-     *
-     * @return {Number}
-     */
-    get length() {
-      return canvases.length;
-    },
-
-    /**
-     * Return a canvas to the pool. This function will clear the canvas for reuse
-     *
-     * @param {HTMLCanvasElement} canvas
-     * @return {String}
-     */
-    release: function release(canvas) {
-      var context = canvas.getContext('2d');
-      context.clearRect(0, 0, canvas.width, canvas.height);
-      canvases.push(canvas);
-    },
-
-    /**
-     * Empty the pool, destroying any references to canvas objects
-     */
-    clear: function clear() {
-      canvases.splice(0, canvases.length);
-    },
-
-    /**
-     * Return the collection of canvases in the pool
-     *
-     * @return {HTMLCanvasElement[]}
-     */
-    get elements() {
-      return canvases;
-    }
-
-  };
-}
-var shared = CanvasPool();
-/* harmony default export */ var canvas_pool = (shared);
 // CONCATENATED MODULE: ./lib/index.js
-
 
 
 
@@ -748,11 +673,10 @@ var shared = CanvasPool();
  * A configuration type for the watermark function
  *
  * @typedef {Object} Options
- * @property {Function} init - an initialization function that is given Image objects before loading (only applies if resources is a collection of urls)
+ * @property {Function} init - an initialization function that is given Image objects before loading (only applies if resource is a collection of urls)
  * @property {ImageFormat} type - specify the image format to be used when retrieving result (only supports "image/png" or "image/jpeg", default "image/png")
- * @property {Number} encoderOptions - specify the image compression quality from 0 to 1 (default 0.92)
- * @property {Number} poolSize - number of canvas elements available for drawing,
- * @property {CanvasPool} pool - the pool used. If provided, poolSize will be ignored
+ * @property {Number} quality - specify the image compression quality from 0 to 1 (default 0.92)
+ * @property {String} id - Canvas id
  */
 
 /**
@@ -762,8 +686,9 @@ var shared = CanvasPool();
 
 var defaults = {
   init: function init() {},
-  type: 'image/png',
-  encoderOptions: 0.92
+  type: 'png',
+  quality: 1,
+  id: 'watermark'
 };
 /**
  * Merge the given options with the defaults
@@ -776,85 +701,44 @@ function mergeOptions(options) {
   return extend(clone(defaults), options);
 }
 /**
- * Release canvases from a draw result for reuse. Returns
- * the dataURL from the result's canvas
- *
- * @param {DrawResult} result
- * @param {CanvasPool} pool
- * @return  {String}
- */
-
-
-function release(result, pool, parameters) {
-  var canvas = result.canvas,
-      sources = result.sources;
-  var dataURL = canvas_dataUrl(canvas, parameters);
-  sources.forEach(pool.release);
-  return dataURL;
-}
-/**
  * Return a watermark object
  *
  *
- * @param {Array} resources - a collection of urls, File objects, or Image objects
+ * @param {String} resource - url, File objects, or Image objects
  * @param {Options} options - a configuration object for watermark
  * @param {Promise} promise - optional
  * @return {Object}
  */
 
 
-function watermark(resources) {
+var canvasUtils;
+function watermark(resource) {
   var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   var promise = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
   var opts = mergeOptions(options);
-  promise || (promise = image_load(resources, opts.init, canvas_pool));
+
+  if (!canvasUtils) {
+    canvasUtils = new Canvas();
+  }
+
+  promise || (promise = canvasUtils.init(opts.id).then(function () {
+    return load(resource, opts.init, canvasUtils.get());
+  })).then(function (image) {
+    return drawImage(image, canvasUtils.get());
+  });
   return {
     /**
      * Convert the watermarked image into a dataUrl. The draw
-     * function is given all images as canvas elements in order
+     * function is given the image as canvas elements in order
      *
      * @param {Function} draw
      * @return {Object}
      */
-    dataUrl: function dataUrl(draw) {
-      var promise = this.then(function (images) {
-        return mapToCanvas(images, canvas_pool);
-      }).then(function (canvases) {
-        return style_result(draw, canvases);
-      }).then(function (result) {
-        return release(result, canvas_pool, {
-          type: opts.type,
-          encoderOptions: opts.encoderOptions
-        });
+    draw: function draw(_draw) {
+      var promise = this.then(function () {
+        return result(_draw, canvasUtils.get());
       });
-      return watermark(resources, opts, promise);
-    },
-
-    /**
-     * Load additional resources
-     *
-     * @param {Array} resources - a collection of urls, File objects, or Image objects
-     * @param {Function} init - an initialization function that is given Image objects before loading (only applies if resources is a collection of urls)
-     * @return {Object}
-     */
-    load: function load(resources, init) {
-      var promise = this.then(function (resource) {
-        return image_load([resource].concat(resources), init, canvas_pool);
-      });
-      return watermark(resources, opts, promise);
-    },
-
-    /**
-     * Render the current state of the watermarked image. Useful for performing
-     * actions after the watermark has been applied
-     *
-     * @return {Object}
-     */
-    render: function render() {
-      var promise = this.then(function (resource) {
-        return image_load([resource], null, canvas_pool);
-      });
-      return watermark(resources, opts, promise);
+      return watermark(resource, opts, promise);
     },
 
     /**
@@ -864,19 +748,39 @@ function watermark(resources) {
      * @return {Object}
      */
     blob: function blob(draw) {
-      var promise = this.dataUrl(draw).then(blob_blob);
-      return watermark(resources, opts, promise);
+      var promise = this.draw(draw).then(blob_blob);
+      return watermark(resource, opts, promise);
     },
 
     /**
      * Convert the watermark into an image using the given draw function
      *
+     * @param {String} url
      * @param {Function} draw
      * @return {Object}
      */
-    image: function image(draw) {
-      var promise = this.dataUrl(draw).then(createImage);
-      return watermark(resources, opts, promise);
+    image: function image(url, draw) {
+      var _this = this;
+
+      var promise = this.then(function () {
+        return createImage(url);
+      }).then(function (res) {
+        return _this.draw(function (target) {
+          return draw(target, res);
+        });
+      });
+      return watermark(resource, opts, promise);
+    },
+
+    /**
+     * Convert the watermark into a text using the given draw function
+     *
+     * @param {Function} draw
+     * @return {Object}
+     */
+    text: function text(draw) {
+      var promise = this.draw(draw);
+      return watermark(resource, opts, promise);
     },
 
     /**
@@ -890,6 +794,24 @@ function watermark(resources) {
       }
 
       return promise.then.apply(promise, funcs);
+    },
+
+    /**
+     * Complete to the watermark promise
+     *
+     * @return {Promise}
+     */
+    exec: function exec() {
+      var funcs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : function (f) {
+        return f;
+      };
+      return this.then(function () {
+        return canvasUtils.dataUrl(canvasUtils.get(), {
+          type: opts.type,
+          quality: opts.quality,
+          id: opts.id
+        });
+      }).then(funcs);
     }
   };
 }
@@ -905,7 +827,7 @@ watermark.text = style_text;
  */
 
 watermark.destroy = function () {
-  return canvas_pool.clear();
+  return canvasUtils.release();
 };
 
 /***/ })
