@@ -161,7 +161,6 @@ function load(resource, init, canvas) {
 
 function loadUrl(url, init, canvas) {
   return createImage(url, init).then(function (res) {
-    console.log(canvas, canvas._canvasRef);
     canvas._canvasRef.style.width = res.width + 'px';
     canvas._canvasRef.style.height = res.height + 'px';
     canvas._canvasRef.width = res.width;
@@ -201,16 +200,30 @@ function createImage(url, onload) {
  *
  * @param {Image} img
  * @param {HTMLCanvasElement} canvas
+ * @param {Number} x - an x value
+ * @param {Number} y - a y value
+ * @param {String} image the path of image
+ * @param {Number} width width of image
+ * @param {Number} height height of image
  * @return {Promise}
  */
 
 function drawImage(path, canvas) {
+  var x = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+  var y = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0;
+  var width = arguments.length > 4 ? arguments[4] : undefined;
+  var height = arguments.length > 5 ? arguments[5] : undefined;
   var ctx = canvas.getContext('2d');
   var img = canvas.createImage();
   img.src = path;
   return new Promise(function (resolve, reject) {
     img.onload = function () {
-      ctx.drawImage(img, 0, 0);
+      if (width && height) {
+        ctx.drawImage(img, x, y, width, height);
+      } else {
+        ctx.drawImage(img, x, y);
+      }
+
       resolve(canvas);
     };
 
@@ -252,9 +265,9 @@ var Canvas = /*#__PURE__*/function () {
           size: true
         }).exec(function (res) {
           var canvas = res[0].node;
-          console.log(111111, id, canvas._canvasId, res);
 
           if (canvas) {
+            canvas._canvasRef.style.display = 'none';
             _this.canvas = canvas;
 
             _this.release(canvas);
@@ -292,6 +305,7 @@ var Canvas = /*#__PURE__*/function () {
           quality = _ref.quality,
           id = _ref.id;
       return new Promise(function (resolve, reject) {
+        var dpr = wx.getSystemInfoSync().pixelRatio;
         wx.canvasToTempFilePath({
           fileType: type,
           quality: quality,
@@ -299,11 +313,11 @@ var Canvas = /*#__PURE__*/function () {
           y: 0,
           width: canvas.width,
           height: canvas.height,
-          destWidth: canvas.width,
-          destHeight: canvas.height,
-          canvasId: canvas._canvasId,
+          destWidth: canvas.width * dpr,
+          destHeight: canvas.height * dpr,
+          canvasId: id,
+          canvas: canvas,
           success: function success(res) {
-            console.log(111, res);
             resolve(res.tempFilePath);
           },
           fail: reject
@@ -360,7 +374,7 @@ function identity(x) {
 }
 // CONCATENATED MODULE: ./lib/blob/index.js
 
-var blob_url = /^data:([^;]+);base64,(.*)$/;
+var url = /^data:([^;]+);base64,(.*)$/;
 /**
  * Split a data url into a content type and raw data
  *
@@ -369,7 +383,7 @@ var blob_url = /^data:([^;]+);base64,(.*)$/;
  */
 
 function split(dataUrl) {
-  return blob_url.exec(dataUrl).slice(1);
+  return url.exec(dataUrl).slice(1);
 }
 /**
  * Decode a base64 string
@@ -413,33 +427,46 @@ var blob_blob = sequence(split, function (parts) {
   });
 });
 // CONCATENATED MODULE: ./lib/style/image/index.js
+
 /**
  * Return a function for positioning a watermark on a target canvas
  *
+ * @param {String} image the path of image
+ * @param {Number} width width of image
+ * @param {Number} height height of image
  * @param {Function} xFn - a function to determine an x value
  * @param {Function} yFn - a function to determine a y value
  * @param {Number} alpha
- * @return {Function}
+ * @return {Promise}
  */
-function atPos(xFn, yFn, alpha) {
+
+function atPos(image, width, height, xFn, yFn, alpha) {
   alpha || (alpha = 1.0);
-  return function (target, img) {
+  return function (target) {
     var context = target.getContext('2d');
     context.globalAlpha = alpha;
-    context.drawImage(img.path, xFn(target, img), yFn(target, img));
-    return target;
+    return createImage(image).then(function (res) {
+      var mark = {
+        height: height || res.height,
+        width: width || res.width
+      };
+      return drawImage(res.path, target, xFn(target, mark), yFn(target, mark), width, height);
+    });
   };
 }
 /**
  * Place the watermark in the lower right corner of the target
  * image
  *
+ * @param {String} image the path of image
+ * @param {Number} width width of image
+ * @param {Number} height height of image
  * @param {Number} alpha
  * @return {Function}
  */
 
-function lowerRight(alpha) {
-  return atPos(function (target, mark) {
+function lowerRight(image, width, height, alpha) {
+  return atPos(image, width, height, function (target, mark) {
     return target.width - (mark.width + 10);
   }, function (target, mark) {
     return target.height - (mark.height + 10);
@@ -449,12 +476,15 @@ function lowerRight(alpha) {
  * Place the watermark in the upper right corner of the target
  * image
  *
+ * @param {String} image the path of image
+ * @param {Number} width width of image
+ * @param {Number} height height of image
  * @param {Number} alpha
  * @return {Function}
  */
 
-function upperRight(alpha) {
-  return atPos(function (target, mark) {
+function upperRight(image, width, height, alpha) {
+  return atPos(image, width, height, function (target, mark) {
     return target.width - (mark.width + 10);
   }, function (target, mark) {
     return 10;
@@ -464,12 +494,15 @@ function upperRight(alpha) {
  * Place the watermark in the lower left corner of the target
  * image
  *
+ * @param {String} image the path of image
+ * @param {Number} width width of image
+ * @param {Number} height height of image
  * @param {Number} alpha
  * @return {Function}
  */
 
-function lowerLeft(alpha) {
-  return atPos(function (target, mark) {
+function lowerLeft(image, width, height, alpha) {
+  return atPos(image, width, height, function (target, mark) {
     return 10;
   }, function (target, mark) {
     return target.height - (mark.height + 10);
@@ -479,12 +512,15 @@ function lowerLeft(alpha) {
  * Place the watermark in the upper left corner of the target
  * image
  *
+ * @param {String} image the path of image
+ * @param {Number} width width of image
+ * @param {Number} height height of image
  * @param {Number} alpha
  * @return {Function}
  */
 
-function upperLeft(alpha) {
-  return atPos(function (target, mark) {
+function upperLeft(image, width, height, alpha) {
+  return atPos(image, width, height, function (target, mark) {
     return 10;
   }, function (target, mark) {
     return 10;
@@ -494,12 +530,15 @@ function upperLeft(alpha) {
  * Place the watermark in the center of the target
  * image
  *
+ * @param {String} image the path of image
+ * @param {Number} width width of image
+ * @param {Number} height height of image
  * @param {Number} alpha
  * @return {Function}
  */
 
-function center(alpha) {
-  return atPos(function (target, mark) {
+function center(image, width, height, alpha) {
+  return atPos(image, width, height, function (target, mark) {
     return (target.width - mark.width) / 2;
   }, function (target, mark) {
     return (target.height - mark.height) / 2;
@@ -631,12 +670,11 @@ var style_text = text_namespaceObject;
  *
  * @param {Function} draw - the draw function used to create a DrawResult
  * @param {HTMLCanvasElement} canvas - the canvases used by the draw function
- * @return {HTMLCanvasElement}
+ * @return {Promise}
  */
 
 function result(draw, canvas) {
-  draw.apply(null, [canvas]);
-  return canvas;
+  return draw.apply(null, [canvas]);
 }
 // CONCATENATED MODULE: ./lib/object/index.js
 /**
@@ -723,9 +761,9 @@ function watermark(resource) {
 
   promise || (promise = canvasUtils.init(opts.id).then(function () {
     return load(resource, opts.init, canvasUtils.get());
-  })).then(function (image) {
+  }).then(function (image) {
     return drawImage(image, canvasUtils.get());
-  });
+  }));
   return {
     /**
      * Convert the watermarked image into a dataUrl. The draw
@@ -755,20 +793,11 @@ function watermark(resource) {
     /**
      * Convert the watermark into an image using the given draw function
      *
-     * @param {String} url
      * @param {Function} draw
      * @return {Object}
      */
-    image: function image(url, draw) {
-      var _this = this;
-
-      var promise = this.then(function () {
-        return createImage(url);
-      }).then(function (res) {
-        return _this.draw(function (target) {
-          return draw(target, res);
-        });
-      });
+    image: function image(draw) {
+      var promise = this.draw(draw);
       return watermark(resource, opts, promise);
     },
 
@@ -805,7 +834,7 @@ function watermark(resource) {
       var funcs = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : function (f) {
         return f;
       };
-      return this.then(function () {
+      return promise.then(function () {
         return canvasUtils.dataUrl(canvasUtils.get(), {
           type: opts.type,
           quality: opts.quality,
