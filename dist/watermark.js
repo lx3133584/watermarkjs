@@ -161,10 +161,16 @@ function load(resource, init, canvas) {
 
 function loadUrl(url, init, canvas) {
   return createImage(url, init).then(function (res) {
-    canvas._canvasRef.style.width = res.width + 'px';
-    canvas._canvasRef.style.height = res.height + 'px';
-    canvas._canvasRef.width = res.width;
-    canvas._canvasRef.height = res.height;
+    if (canvas._canvasRef) {
+      canvas._canvasRef.style.width = res.width + 'px';
+      canvas._canvasRef.style.height = res.height + 'px';
+      canvas._canvasRef.width = res.width;
+      canvas._canvasRef.height = res.height;
+    } else {
+      canvas.width = res.width;
+      canvas.height = res.height;
+    }
+
     return res.path;
   });
 }
@@ -267,7 +273,6 @@ var Canvas = /*#__PURE__*/function () {
           var canvas = res[0].node;
 
           if (canvas) {
-            canvas._canvasRef.style.display = 'none';
             _this.canvas = canvas;
 
             _this.release(canvas);
@@ -306,6 +311,7 @@ var Canvas = /*#__PURE__*/function () {
           id = _ref.id;
       return new Promise(function (resolve, reject) {
         var dpr = wx.getSystemInfoSync().pixelRatio;
+        console.log(canvas.width, canvas.height, dpr);
         wx.canvasToTempFilePath({
           fileType: type,
           quality: quality,
