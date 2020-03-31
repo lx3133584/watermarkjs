@@ -437,6 +437,7 @@ var blob_blob = sequence(split, function (parts) {
  * @param {Function} xFn - a function to determine an x value
  * @param {Function} yFn - a function to determine a y value
  * @param {Number} alpha
+ * @param {Number} distance
  * @return {Promise}
  */
 
@@ -462,14 +463,15 @@ function atPos(image, width, height, xFn, yFn, alpha) {
  * @param {Number} width width of image
  * @param {Number} height height of image
  * @param {Number} alpha
+ * @param {Number} distance
  * @return {Function}
  */
 
-function lowerRight(image, width, height, alpha) {
+function lowerRight(image, width, height, alpha, distance) {
   return atPos(image, width, height, function (target, mark) {
     return target.width - (mark.width + 10);
   }, function (target, mark) {
-    return target.height - (mark.height + 10);
+    return target.height - distance - mark.height || target.height - (mark.height + 10);
   }, alpha);
 }
 /**
@@ -480,14 +482,15 @@ function lowerRight(image, width, height, alpha) {
  * @param {Number} width width of image
  * @param {Number} height height of image
  * @param {Number} alpha
+ * @param {Number} distance
  * @return {Function}
  */
 
-function upperRight(image, width, height, alpha) {
+function upperRight(image, width, height, alpha, distance) {
   return atPos(image, width, height, function (target, mark) {
     return target.width - (mark.width + 10);
   }, function (target, mark) {
-    return 10;
+    return distance || 10;
   }, alpha);
 }
 /**
@@ -498,14 +501,15 @@ function upperRight(image, width, height, alpha) {
  * @param {Number} width width of image
  * @param {Number} height height of image
  * @param {Number} alpha
+ * @param {Number} distance
  * @return {Function}
  */
 
-function lowerLeft(image, width, height, alpha) {
+function lowerLeft(image, width, height, alpha, distance) {
   return atPos(image, width, height, function (target, mark) {
     return 10;
   }, function (target, mark) {
-    return target.height - (mark.height + 10);
+    return target.height - distance - mark.height || target.height - (mark.height + 10);
   }, alpha);
 }
 /**
@@ -516,14 +520,15 @@ function lowerLeft(image, width, height, alpha) {
  * @param {Number} width width of image
  * @param {Number} height height of image
  * @param {Number} alpha
+ * @param {Number} distance
  * @return {Function}
  */
 
-function upperLeft(image, width, height, alpha) {
+function upperLeft(image, width, height, alpha, distance) {
   return atPos(image, width, height, function (target, mark) {
     return 10;
   }, function (target, mark) {
-    return 10;
+    return distance || 10;
   }, alpha);
 }
 /**
@@ -575,15 +580,15 @@ function text_atPos(xFn, yFn, text, font, fillStyle, alpha) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
- * @param {Number} y - height in text metrics is not very well supported. This is a manual value
+ * @param {Number} distance
  * @return {Function}
  */
 
-function text_lowerRight(text, font, fillStyle, alpha, y) {
+function text_lowerRight(text, font, fillStyle, alpha, distance) {
   return text_atPos(function (target, metrics) {
     return target.width - (metrics.width + 10);
   }, function (target) {
-    return y || target.height - 10;
+    return target.height - distance || target.height - 10;
   }, text, font, fillStyle, alpha);
 }
 /**
@@ -593,15 +598,15 @@ function text_lowerRight(text, font, fillStyle, alpha, y) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
- * @param {Number} y - height in text metrics is not very well supported. This is a manual value
+ * @param {Number} distance
  * @return {Function}
  */
 
-function text_lowerLeft(text, font, fillStyle, alpha, y) {
+function text_lowerLeft(text, font, fillStyle, alpha, distance) {
   return text_atPos(function () {
     return 10;
   }, function (target) {
-    return y || target.height - 10;
+    return target.height - distance || target.height - 10;
   }, text, font, fillStyle, alpha);
 }
 /**
@@ -611,15 +616,15 @@ function text_lowerLeft(text, font, fillStyle, alpha, y) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
- * @param {Number} y - height in text metrics is not very well supported. This is a manual value
+ * @param {Number} distance
  * @return {Function}
  */
 
-function text_upperRight(text, font, fillStyle, alpha, y) {
+function text_upperRight(text, font, fillStyle, alpha, distance) {
   return text_atPos(function (target, metrics) {
     return target.width - (metrics.width + 10);
   }, function () {
-    return y || 20;
+    return distance || 20;
   }, text, font, fillStyle, alpha);
 }
 /**
@@ -629,15 +634,15 @@ function text_upperRight(text, font, fillStyle, alpha, y) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
- * @param {Number} y - height in text metrics is not very well supported. This is a manual value
+ * @param {Number} distance
  * @return {Function}
  */
 
-function text_upperLeft(text, font, fillStyle, alpha, y) {
+function text_upperLeft(text, font, fillStyle, alpha, distance) {
   return text_atPos(function () {
     return 10;
   }, function () {
-    return y || 20;
+    return distance || 20;
   }, text, font, fillStyle, alpha);
 }
 /**
@@ -647,11 +652,10 @@ function text_upperLeft(text, font, fillStyle, alpha, y) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
- * @param {Number} y - height in text metrics is not very well supported. This is a manual value
  * @return {Function}
  */
 
-function text_center(text, font, fillStyle, alpha, y) {
+function text_center(text, font, fillStyle, alpha) {
   return text_atPos(function (target, metrics, ctx) {
     ctx.textAlign = 'center';
     return target.width / 2;
