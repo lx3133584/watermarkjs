@@ -311,7 +311,6 @@ var Canvas = /*#__PURE__*/function () {
           id = _ref.id;
       return new Promise(function (resolve, reject) {
         var dpr = wx.getSystemInfoSync().pixelRatio;
-        console.log(canvas.width, canvas.height, dpr);
         wx.canvasToTempFilePath({
           fileType: type,
           quality: quality,
@@ -475,9 +474,9 @@ function atPos(image, width, height, xFn, yFn, alpha) {
 
 function lowerRight(image, width, height, alpha, distance) {
   return atPos(image, width, height, function (target, mark) {
-    return target.width - (mark.width + 10);
+    return target.width - (mark.width + 20);
   }, function (target, mark) {
-    return target.height - distance - mark.height || target.height - (mark.height + 10);
+    return target.height - distance - mark.height || target.height - (mark.height + 20);
   }, alpha);
 }
 /**
@@ -494,9 +493,9 @@ function lowerRight(image, width, height, alpha, distance) {
 
 function upperRight(image, width, height, alpha, distance) {
   return atPos(image, width, height, function (target, mark) {
-    return target.width - (mark.width + 10);
+    return target.width - (mark.width + 20);
   }, function (target, mark) {
-    return distance || 10;
+    return distance || 20;
   }, alpha);
 }
 /**
@@ -513,9 +512,9 @@ function upperRight(image, width, height, alpha, distance) {
 
 function lowerLeft(image, width, height, alpha, distance) {
   return atPos(image, width, height, function (target, mark) {
-    return 10;
+    return 20;
   }, function (target, mark) {
-    return target.height - distance - mark.height || target.height - (mark.height + 10);
+    return target.height - distance - mark.height || target.height - (mark.height + 20);
   }, alpha);
 }
 /**
@@ -532,9 +531,9 @@ function lowerLeft(image, width, height, alpha, distance) {
 
 function upperLeft(image, width, height, alpha, distance) {
   return atPos(image, width, height, function (target, mark) {
-    return 10;
+    return 20;
   }, function (target, mark) {
-    return distance || 10;
+    return distance || 20;
   }, alpha);
 }
 /**
@@ -592,9 +591,9 @@ function text_atPos(xFn, yFn, text, font, fillStyle, alpha) {
 
 function text_lowerRight(text, font, fillStyle, alpha, distance) {
   return text_atPos(function (target, metrics) {
-    return target.width - (metrics.width + 10);
+    return target.width - (metrics.width + 20);
   }, function (target) {
-    return target.height - distance || target.height - 10;
+    return target.height - distance || target.height - 20;
   }, text, font, fillStyle, alpha);
 }
 /**
@@ -610,9 +609,9 @@ function text_lowerRight(text, font, fillStyle, alpha, distance) {
 
 function text_lowerLeft(text, font, fillStyle, alpha, distance) {
   return text_atPos(function () {
-    return 10;
+    return 20;
   }, function (target) {
-    return target.height - distance || target.height - 10;
+    return target.height - distance || target.height - 20;
   }, text, font, fillStyle, alpha);
 }
 /**
@@ -628,7 +627,7 @@ function text_lowerLeft(text, font, fillStyle, alpha, distance) {
 
 function text_upperRight(text, font, fillStyle, alpha, distance) {
   return text_atPos(function (target, metrics) {
-    return target.width - (metrics.width + 10);
+    return target.width - (metrics.width + 20);
   }, function () {
     return distance || 20;
   }, text, font, fillStyle, alpha);
@@ -646,7 +645,7 @@ function text_upperRight(text, font, fillStyle, alpha, distance) {
 
 function text_upperLeft(text, font, fillStyle, alpha, distance) {
   return text_atPos(function () {
-    return 10;
+    return 20;
   }, function () {
     return distance || 20;
   }, text, font, fillStyle, alpha);
