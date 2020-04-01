@@ -584,7 +584,6 @@ function center(_ref5) {
 function text_atPos(xFn, yFn, text, font, fillStyle, alpha, stroke, strokeStyle) {
   return function (target) {
     var context = target.getContext('2d');
-    console.log(context, context.strokeText);
     context.globalAlpha = alpha || 1.0;
     context.fillStyle = fillStyle || '#ffffff';
     context.font = font || '24px sans-serif';
