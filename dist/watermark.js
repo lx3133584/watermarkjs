@@ -140,26 +140,13 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /**
- * Used for loading image resources asynchronously and maintaining
- * the supplied order of arguments
- *
- * @param {String} resource - a url, File objects, or Image objects
- * @param {Function} init - called at the beginning of resource initialization
- * @return {Promise}
- */
-function load(resource, init, canvas) {
-  var promise = loadUrl(resource, init, canvas);
-  return promise;
-}
-/**
  * Load an image by its url
  *
  * @param {String} url
  * @param {Function} init - an optional image initializer
  * @return {Promise}
  */
-
-function loadUrl(url, init, canvas) {
+function load(url, init, canvas) {
   return createImage(url, init).then(function (res) {
     if (canvas._canvasRef) {
       canvas._canvasRef.style.width = res.width + 'px';
@@ -450,13 +437,15 @@ function atPos(image, width, height, xFn, yFn, alpha) {
   alpha || (alpha = 1.0);
   return function (target) {
     var context = target.getContext('2d');
-    context.globalAlpha = alpha;
+    context.globalAlpha = alpha || 1.0;
     return createImage(image).then(function (res) {
       var mark = {
         height: height || res.height,
         width: width || res.width
       };
-      return drawImage(res.path, target, xFn(target, mark), yFn(target, mark), width, height);
+      var x = xFn(target, mark);
+      var y = yFn(target, mark);
+      return drawImage(res.path, target, x, y, width, height);
     });
   };
 }
@@ -472,7 +461,12 @@ function atPos(image, width, height, xFn, yFn, alpha) {
  * @return {Function}
  */
 
-function lowerRight(image, width, height, alpha, distance) {
+function lowerRight(_ref) {
+  var image = _ref.image,
+      width = _ref.width,
+      height = _ref.height,
+      alpha = _ref.alpha,
+      distance = _ref.distance;
   return atPos(image, width, height, function (target, mark) {
     return target.width - (mark.width + 20);
   }, function (target, mark) {
@@ -491,7 +485,12 @@ function lowerRight(image, width, height, alpha, distance) {
  * @return {Function}
  */
 
-function upperRight(image, width, height, alpha, distance) {
+function upperRight(_ref2) {
+  var image = _ref2.image,
+      width = _ref2.width,
+      height = _ref2.height,
+      alpha = _ref2.alpha,
+      distance = _ref2.distance;
   return atPos(image, width, height, function (target, mark) {
     return target.width - (mark.width + 20);
   }, function (target, mark) {
@@ -510,7 +509,12 @@ function upperRight(image, width, height, alpha, distance) {
  * @return {Function}
  */
 
-function lowerLeft(image, width, height, alpha, distance) {
+function lowerLeft(_ref3) {
+  var image = _ref3.image,
+      width = _ref3.width,
+      height = _ref3.height,
+      alpha = _ref3.alpha,
+      distance = _ref3.distance;
   return atPos(image, width, height, function (target, mark) {
     return 20;
   }, function (target, mark) {
@@ -529,7 +533,12 @@ function lowerLeft(image, width, height, alpha, distance) {
  * @return {Function}
  */
 
-function upperLeft(image, width, height, alpha, distance) {
+function upperLeft(_ref4) {
+  var image = _ref4.image,
+      width = _ref4.width,
+      height = _ref4.height,
+      alpha = _ref4.alpha,
+      distance = _ref4.distance;
   return atPos(image, width, height, function (target, mark) {
     return 20;
   }, function (target, mark) {
@@ -547,7 +556,11 @@ function upperLeft(image, width, height, alpha, distance) {
  * @return {Function}
  */
 
-function center(image, width, height, alpha) {
+function center(_ref5) {
+  var image = _ref5.image,
+      width = _ref5.width,
+      height = _ref5.height,
+      alpha = _ref5.alpha;
   return atPos(image, width, height, function (target, mark) {
     return (target.width - mark.width) / 2;
   }, function (target, mark) {
@@ -564,17 +577,27 @@ function center(image, width, height, alpha) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha
+ * @param {Boolean} stroke - Whether it has stroke
+ * @param {Boolean} strokeStyle
  * @return {Function}
  */
-function text_atPos(xFn, yFn, text, font, fillStyle, alpha) {
-  alpha || (alpha = 1.0);
+function text_atPos(xFn, yFn, text, font, fillStyle, alpha, stroke, strokeStyle) {
   return function (target) {
     var context = target.getContext('2d');
-    context.globalAlpha = alpha;
-    context.fillStyle = fillStyle;
-    context.font = font;
+    console.log(context, context.strokeText);
+    context.globalAlpha = alpha || 1.0;
+    context.fillStyle = fillStyle || '#ffffff';
+    context.font = font || '24px sans-serif';
     var metrics = context.measureText(text);
-    context.fillText(text, xFn(target, metrics, context), yFn(target, metrics, context));
+    var x = xFn(target, metrics, context);
+    var y = yFn(target, metrics, context);
+
+    if (stroke) {
+      context.strokeStyle = strokeStyle || '#000000';
+      context.strokeText(text, x, y);
+    }
+
+    context.fillText(text, x, y);
     return target;
   };
 }
@@ -585,16 +608,25 @@ function text_atPos(xFn, yFn, text, font, fillStyle, alpha) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
+ * @param {Boolean} stroke - Whether it has stroke
+ * @param {Boolean} strokeStyle
  * @param {Number} distance
  * @return {Function}
  */
 
-function text_lowerRight(text, font, fillStyle, alpha, distance) {
+function text_lowerRight(_ref) {
+  var text = _ref.text,
+      font = _ref.font,
+      fillStyle = _ref.fillStyle,
+      alpha = _ref.alpha,
+      stroke = _ref.stroke,
+      strokeStyle = _ref.strokeStyle,
+      distance = _ref.distance;
   return text_atPos(function (target, metrics) {
     return target.width - (metrics.width + 20);
   }, function (target) {
     return target.height - distance || target.height - 20;
-  }, text, font, fillStyle, alpha);
+  }, text, font, fillStyle, alpha, stroke, strokeStyle);
 }
 /**
  * Write text to the lower left corner of the target canvas
@@ -603,16 +635,25 @@ function text_lowerRight(text, font, fillStyle, alpha, distance) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
+ * @param {Boolean} stroke - Whether it has stroke
+ * @param {Boolean} strokeStyle
  * @param {Number} distance
  * @return {Function}
  */
 
-function text_lowerLeft(text, font, fillStyle, alpha, distance) {
+function text_lowerLeft(_ref2) {
+  var text = _ref2.text,
+      font = _ref2.font,
+      fillStyle = _ref2.fillStyle,
+      alpha = _ref2.alpha,
+      stroke = _ref2.stroke,
+      strokeStyle = _ref2.strokeStyle,
+      distance = _ref2.distance;
   return text_atPos(function () {
     return 20;
   }, function (target) {
     return target.height - distance || target.height - 20;
-  }, text, font, fillStyle, alpha);
+  }, text, font, fillStyle, alpha, stroke, strokeStyle);
 }
 /**
  * Write text to the upper right corner of the target canvas
@@ -621,16 +662,25 @@ function text_lowerLeft(text, font, fillStyle, alpha, distance) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
+ * @param {Boolean} stroke - Whether it has stroke
+ * @param {Boolean} strokeStyle
  * @param {Number} distance
  * @return {Function}
  */
 
-function text_upperRight(text, font, fillStyle, alpha, distance) {
+function text_upperRight(_ref3) {
+  var text = _ref3.text,
+      font = _ref3.font,
+      fillStyle = _ref3.fillStyle,
+      alpha = _ref3.alpha,
+      stroke = _ref3.stroke,
+      strokeStyle = _ref3.strokeStyle,
+      distance = _ref3.distance;
   return text_atPos(function (target, metrics) {
     return target.width - (metrics.width + 20);
   }, function () {
     return distance || 20;
-  }, text, font, fillStyle, alpha);
+  }, text, font, fillStyle, alpha, stroke, strokeStyle);
 }
 /**
  * Write text to the upper left corner of the target canvas
@@ -639,16 +689,25 @@ function text_upperRight(text, font, fillStyle, alpha, distance) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
+ * @param {Boolean} stroke - Whether it has stroke
+ * @param {Boolean} strokeStyle
  * @param {Number} distance
  * @return {Function}
  */
 
-function text_upperLeft(text, font, fillStyle, alpha, distance) {
+function text_upperLeft(_ref4) {
+  var text = _ref4.text,
+      font = _ref4.font,
+      fillStyle = _ref4.fillStyle,
+      alpha = _ref4.alpha,
+      stroke = _ref4.stroke,
+      strokeStyle = _ref4.strokeStyle,
+      distance = _ref4.distance;
   return text_atPos(function () {
     return 20;
   }, function () {
     return distance || 20;
-  }, text, font, fillStyle, alpha);
+  }, text, font, fillStyle, alpha, stroke, strokeStyle);
 }
 /**
  * Write text to the center of the target canvas
@@ -657,17 +716,25 @@ function text_upperLeft(text, font, fillStyle, alpha, distance) {
  * @param {String} font - same as the CSS font property
  * @param {String} fillStyle
  * @param {Number} alpha - control text transparency
+ * @param {Boolean} stroke - Whether it has stroke
+ * @param {Boolean} strokeStyle
  * @return {Function}
  */
 
-function text_center(text, font, fillStyle, alpha) {
+function text_center(_ref5) {
+  var text = _ref5.text,
+      font = _ref5.font,
+      fillStyle = _ref5.fillStyle,
+      alpha = _ref5.alpha,
+      stroke = _ref5.stroke,
+      strokeStyle = _ref5.strokeStyle;
   return text_atPos(function (target, metrics, ctx) {
     ctx.textAlign = 'center';
     return target.width / 2;
   }, function (target, metrics, ctx) {
     ctx.textBaseline = 'middle';
     return target.height / 2;
-  }, text, font, fillStyle, alpha);
+  }, text, font, fillStyle, alpha, stroke, strokeStyle);
 }
 // CONCATENATED MODULE: ./lib/style/index.js
 

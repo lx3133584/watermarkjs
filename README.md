@@ -23,15 +23,15 @@ $ bower install lx3133584/watermarkjs
 ```js
 // watermark by local path
 watermark('../../images/test.jpg')
-  .text(watermark.text.upperRight('测试水印1', '24px sans-serif', '#ffffff', 0.5))
-  .text(watermark.text.upperLeft('测试水印2', '24px sans-serif', '#ffffff', 1))
-  .image(watermark.image.lowerLeft('https://dss0.baidu.com/73x1bjeh1BF3odCf/it/u=138126325,1485620701&fm=85&s=7FAB2EC3909A35D01E299C1A030010D2', 150, 150, 0.5))
+  .text(watermark.text.upperRight({text: '测试水印1', font: '24px sans-serif', fillStyle: '#ffffff', alpha: 0.5, stroke: true, strokeStyle: '#000', distance: 30}))
+  .text(watermark.text.upperLeft({text: '测试水印2', font: '24px sans-serif', fillStyle: '#ffffff'}))
+  .image(watermark.image.lowerLeft({image: 'https://dss0.baidu.com/73x1bjeh1BF3odCf/it/u=138126325,1485620701&fm=85&s=7FAB2EC3909A35D01E299C1A030010D2', width: 150, height: 150, alpha: 0.5, distance: 30}))
   .exec(res => console.log('success:', res))
   .catch(res => console.error('error:', res))
 
 // load a net url
 watermark('https://dss0.baidu.com/73x1bjeh1BF3odCf/it/u=138126325,1485620701&fm=85&s=7FAB2EC3909A35D01E299C1A030010D2')
-  .image(watermark.image.lowerLeft('http://host.com/logo.png', 100, 100, 0.5))
+  .image(watermark.image.lowerLeft({image: 'http://host.com/logo.png'}))
   .exec(res => console.log('success:', res))
 
 // watermark from remote source
